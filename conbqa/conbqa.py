@@ -73,7 +73,7 @@ class CONBQA:
         self.v = None
         self.num_regenerate = None
         self.w = None
-        self.intersection_was_not_９empty = None
+        self.intersection_was_not_empty = None
         self.candidate_point = None
         self.burnin_steps = None
         self.sigma = None

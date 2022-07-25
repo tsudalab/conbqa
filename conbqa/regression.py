@@ -1,27 +1,35 @@
 import random
 import numpy as np
-import cplex
 
-
-def MaximumPosterior(transformed_y, Phi):
-    num_weight = np.size(Phi, 1)
-    qmat = np.dot(np.transpose(Phi), Phi).astype(np.float64)
-    obj = (- np.dot(np.transpose(Phi), transformed_y)).tolist()
-    cplex_ins = cplex.Cplex()
-    cplex_ins.objective.set_sense(cplex_ins.objective.sense.minimize)
-    cplex_ins.variables.add(obj=obj,
-                            names=['w' + str(i) for i in range(num_weight)])
-    cplex_ins.objective.set_quadratic(
-        [
+try:
+    import cplex
+    def MaximumPosterior(transformed_y, Phi):
+        num_weight = np.size(Phi, 1)
+        qmat = np.dot(np.transpose(Phi), Phi).astype(np.float64)
+        obj = (- np.dot(np.transpose(Phi), transformed_y)).tolist()
+        cplex_ins = cplex.Cplex()
+        cplex_ins.set_results_stream(None)
+        cplex_ins.set_warning_stream(None)
+        cplex_ins.objective.set_sense(cplex_ins.objective.sense.minimize)
+        cplex_ins.variables.add(obj=obj,
+                                names=['w' + str(i) for i in range(num_weight)])
+        cplex_ins.objective.set_quadratic(
             [
-                [j for j in range(num_weight) if qmat[i, j]],
-                [qmat[i, k] for k in range(num_weight) if qmat[i, k]]
-            ]
-            for i in range(num_weight)
-        ])
-    cplex_ins.solve()
-    w = np.array(cplex_ins.solution.get_values())
-    return w
+                [
+                    [j for j in range(num_weight) if qmat[i, j]],
+                    [qmat[i, k] for k in range(num_weight) if qmat[i, k]]
+                ]
+                for i in range(num_weight)
+            ])
+        cplex_ins.solve()
+        w = np.array(cplex_ins.solution.get_values())
+        return w
+except:
+    from sklearn.linear_model import LinearRegression
+    def MaximumPosterior(transformed_y, Phi):
+        linear_model = LinearRegression(positive=True)
+        linear_model.fit(Phi, transformed_y)
+        return linear_model.coef_
 
 
 def MetropolisHastings(transformed_y, Phi, w, burnin_steps,
